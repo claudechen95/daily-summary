@@ -16,7 +16,7 @@ function parseSections(text: string): { prose: string; sections: Section[] } {
   let bodyLines: string[] = [];
 
   for (const line of lines) {
-    const h3 = line.match(/^###\s+([\S]+)\s+(.+)/);
+    const h3 = line.match(/^#{2,3}\s+([\S]+)\s+(.+)/);
     if (h3) {
       if (currentSection) {
         currentSection.body = bodyLines.join("\n").trim();
