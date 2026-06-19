@@ -26,8 +26,8 @@ export default async function Home() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-1">Daily Summary</h1>
-      <p className="text-gray-400 mb-12 text-sm">What I've been up to</p>
+      <h1 className="text-3xl font-bold mb-1">Web Activity</h1>
+      <p className="text-gray-400 mb-12 text-sm">Daily browser history</p>
 
       {summaries.length === 0 ? (
         <p className="text-gray-400 text-sm">No entries yet.</p>
