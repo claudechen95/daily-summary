@@ -28,8 +28,9 @@ export async function saveSummary(date: string, text: string): Promise<DaySummar
   const existing = await redis.get<DaySummary>(key);
   const createdAt = existing ? existing.createdAt : new Date().toISOString();
   const updatedAt = new Date().toISOString();
+  const mergedText = existing ? `${existing.text}\n\n---\n\n${text}` : text;
 
-  const entry: DaySummary = { date, text, createdAt, updatedAt };
+  const entry: DaySummary = { date, text: mergedText, createdAt, updatedAt };
   const score = new Date(date).getTime();
 
   await redis.set(key, entry);
