@@ -13,6 +13,14 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Los_Angeles",
+  });
+}
+
 export default async function Home() {
   const summaries = await getAllSummaries();
 
@@ -25,12 +33,23 @@ export default async function Home() {
         <p className="text-gray-400 text-sm">No entries yet.</p>
       ) : (
         <div className="space-y-16">
-          {summaries.map((entry) => (
-            <article key={entry.date}>
+          {summaries.map((day) => (
+            <article key={day.date}>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6 pb-3 border-b border-gray-100">
-                {formatDate(entry.date)}
+                {formatDate(day.date)}
               </h2>
-              <DaySummaryView text={entry.text} />
+              <div className="space-y-12">
+                {day.entries.map((entry, i) => (
+                  <div key={i}>
+                    {day.entries.length > 1 && (
+                      <p className="text-xs text-gray-300 mb-4">
+                        {formatTime(entry.createdAt)}
+                      </p>
+                    )}
+                    <DaySummaryView text={entry.text} />
+                  </div>
+                ))}
+              </div>
             </article>
           ))}
         </div>

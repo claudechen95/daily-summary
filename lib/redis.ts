@@ -12,11 +12,29 @@ function getRedis(): Redis {
   return client;
 }
 
-export interface DaySummary {
-  date: string;
+export interface DayEntry {
   text: string;
   createdAt: string;
+}
+
+export interface DaySummary {
+  date: string;
+  entries: DayEntry[];
   updatedAt: string;
+}
+
+// handles old single-text format transparently
+type StoredValue =
+  | DaySummary
+  | { date: string; text: string; createdAt: string; updatedAt: string };
+
+function normalize(raw: StoredValue): DaySummary {
+  if ("entries" in raw) return raw;
+  return {
+    date: raw.date,
+    entries: [{ text: raw.text, createdAt: raw.createdAt }],
+    updatedAt: raw.updatedAt,
+  };
 }
 
 const INDEX_KEY = "summary:index";
@@ -25,18 +43,20 @@ export async function saveSummary(date: string, text: string): Promise<DaySummar
   const redis = getRedis();
   const key = `summary:${date}`;
 
-  const existing = await redis.get<DaySummary>(key);
-  const createdAt = existing ? existing.createdAt : new Date().toISOString();
-  const updatedAt = new Date().toISOString();
-  const mergedText = existing ? `${existing.text}\n\n---\n\n${text}` : text;
+  const raw = await redis.get<StoredValue>(key);
+  const existing = raw ? normalize(raw) : null;
+  const now = new Date().toISOString();
 
-  const entry: DaySummary = { date, text: mergedText, createdAt, updatedAt };
-  const score = new Date(date).getTime();
+  const updated: DaySummary = {
+    date,
+    entries: [...(existing?.entries ?? []), { text, createdAt: now }],
+    updatedAt: now,
+  };
 
-  await redis.set(key, entry);
-  await redis.zadd(INDEX_KEY, { score, member: date });
+  await redis.set(key, updated);
+  await redis.zadd(INDEX_KEY, { score: new Date(date).getTime(), member: date });
 
-  return entry;
+  return updated;
 }
 
 export async function getAllSummaries(): Promise<DaySummary[]> {
@@ -44,9 +64,9 @@ export async function getAllSummaries(): Promise<DaySummary[]> {
   const dates = await redis.zrange<string[]>(INDEX_KEY, 0, -1, { rev: true });
   if (!dates.length) return [];
 
-  const entries = await Promise.all(
-    dates.map((d) => redis.get<DaySummary>(`summary:${d}`))
-  );
+  const raws = await Promise.all(dates.map((d) => redis.get<StoredValue>(`summary:${d}`)));
 
-  return entries.filter((e): e is DaySummary => e !== null);
+  return raws
+    .filter((r): r is StoredValue => r !== null)
+    .map(normalize);
 }
