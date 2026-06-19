@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { text } = body;
-  const date = body.date ?? new Date().toISOString().slice(0, 10);
+  const date = body.date ?? new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date());
 
   if (!text || typeof text !== "string" || !text.trim()) {
     return NextResponse.json({ error: "text is required" }, { status: 400 });
