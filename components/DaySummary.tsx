@@ -25,7 +25,7 @@ function parseSections(text: string): { prose: string; sections: Section[] } {
       }
       currentSection = { emoji: h3[1], title: h3[2].trim(), body: "" };
     } else if (line.startsWith("# ")) {
-      prose = ""; // skip h1 title
+      prose = "";
     } else if (!currentSection) {
       prose += line + "\n";
     } else {
@@ -40,29 +40,62 @@ function parseSections(text: string): { prose: string; sections: Section[] } {
   return { prose: prose.trim(), sections };
 }
 
+function parseTopSiteLine(line: string): { site: string; visits: string; desc: string } | null {
+  if (!line.match(/^\d+\./)) return null;
+
+  // 1. **site** (N visits) — desc
+  let m = line.match(/^\d+\.\s+\*\*(.+?)\*\*\s*\((\d+)\s*visits?\)\s*(?:—|–|-)+\s*(.+)/);
+  if (m) return { site: m[1], visits: m[2], desc: m[3] };
+
+  // 1. **site** — N visits — desc
+  m = line.match(/^\d+\.\s+\*\*(.+?)\*\*\s*(?:—|–|-)+\s*(\d+)\s*visits?\s*(?:—|–|-)+\s*(.+)/);
+  if (m) return { site: m[1], visits: m[2], desc: m[3] };
+
+  // 1. **site** (N) — desc
+  m = line.match(/^\d+\.\s+\*\*(.+?)\*\*\s*\((\d+)\)\s*(?:—|–|-)+\s*(.+)/);
+  if (m) return { site: m[1], visits: m[2], desc: m[3] };
+
+  // 1. **site** — desc  (no visit count)
+  m = line.match(/^\d+\.\s+\*\*(.+?)\*\*\s*(?:—|–|-)+\s*(.+)/);
+  if (m) return { site: m[1], visits: "", desc: m[2] };
+
+  // 1. site (N visits) — desc  (no bold)
+  m = line.match(/^\d+\.\s+(.+?)\s*\((\d+)\s*visits?\)\s*(?:—|–|-)+\s*(.+)/);
+  if (m) return { site: m[1], visits: m[2], desc: m[3] };
+
+  // Fallback: grab whatever is there
+  m = line.match(/^\d+\.\s+\*?\*?(.+?)\*?\*?\s*$/);
+  if (m) return { site: m[1].trim(), visits: "", desc: "" };
+
+  return null;
+}
+
 function TopSites({ body }: { body: string }) {
-  const lines = body.split("\n").filter((l) => l.match(/^\d+\./));
+  const lines = body.split("\n").filter((l) => /^\d+\./.test(l.trim()));
+  const items = lines.map(parseTopSiteLine).filter(Boolean) as { site: string; visits: string; desc: string }[];
+
+  if (!items.length) return <ReactMarkdown>{body}</ReactMarkdown>;
+
   return (
-    <ol className="space-y-2">
-      {lines.map((line, i) => {
-        const match = line.match(/^\d+\.\s+\*\*(.+?)\*\*\s+\((\d+) visits?\)\s+[—–-]\s+(.+)/);
-        if (!match) return null;
-        const [, site, visits, desc] = match;
-        return (
-          <li key={i} className="flex items-start gap-3">
-            <span className="text-xs font-mono text-gray-300 w-5 pt-0.5 shrink-0 text-right">{i + 1}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-gray-900 text-sm">{site}</span>
+    <ol className="space-y-3">
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span className="text-xs font-mono text-gray-300 w-5 pt-0.5 shrink-0 text-right">{i + 1}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-gray-900 text-sm">{item.site}</span>
+              {item.visits && (
                 <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0">
-                  {visits}
+                  {item.visits}
                 </span>
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{desc}</p>
+              )}
             </div>
-          </li>
-        );
-      })}
+            {item.desc && (
+              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.desc}</p>
+            )}
+          </div>
+        </li>
+      ))}
     </ol>
   );
 }
@@ -70,51 +103,96 @@ function TopSites({ body }: { body: string }) {
 function Timeline({ body }: { body: string }) {
   const blocks = body.split(/\n(?=\*\*\d)/).filter(Boolean);
   return (
-    <div className="space-y-4">
-      {blocks.map((block, i) => {
-        const timeMatch = block.match(/^\*\*(.+?)\*\*/);
-        const rest = block.replace(/^\*\*.+?\*\*\s*[—–-]?\s*/, "").trim();
-        return (
-          <div key={i} className="flex gap-3">
-            <div className="shrink-0 text-xs font-mono text-gray-400 w-20 pt-0.5">
-              {timeMatch?.[1]}
+    <div className="relative">
+      <div className="absolute left-[5.5rem] top-1.5 bottom-1.5 w-px bg-gray-100" />
+      <div className="space-y-4">
+        {blocks.map((block, i) => {
+          const timeMatch = block.match(/^\*\*(.+?)\*\*/);
+          const rest = block.replace(/^\*\*.+?\*\*\s*[—–\-]?\s*/, "").trim();
+          return (
+            <div key={i} className="flex gap-3 items-start">
+              <div className="shrink-0 text-xs font-mono text-gray-400 w-20 text-right pt-0.5">
+                {timeMatch?.[1]}
+              </div>
+              <div className="shrink-0 w-2 h-2 rounded-full bg-gray-200 mt-1.5 z-10" />
+              <p className="text-sm text-gray-700 leading-relaxed flex-1">{rest}</p>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed flex-1">{rest}</p>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function Categories({ body }: { body: string }) {
-  const lines = body.split("\n").filter((l) => l.startsWith("**") || l.startsWith("- **"));
-  const items = lines.map((line) => {
-    const match = line.match(/\*\*(.+?)\*\*.*?(\d+)%/);
-    if (!match) return null;
-    return { label: match[1], pct: parseInt(match[2]) };
-  }).filter(Boolean) as { label: string; pct: number }[];
+const CATEGORY_PALETTE = [
+  { bar: "bg-blue-500", track: "bg-blue-50", text: "text-blue-600" },
+  { bar: "bg-violet-500", track: "bg-violet-50", text: "text-violet-600" },
+  { bar: "bg-emerald-500", track: "bg-emerald-50", text: "text-emerald-600" },
+  { bar: "bg-amber-500", track: "bg-amber-50", text: "text-amber-600" },
+  { bar: "bg-rose-500", track: "bg-rose-50", text: "text-rose-600" },
+  { bar: "bg-teal-500", track: "bg-teal-50", text: "text-teal-600" },
+];
 
-  if (!items.length) {
-    return <ReactMarkdown>{body}</ReactMarkdown>;
-  }
+function Categories({ body }: { body: string }) {
+  const lines = body.split("\n").filter((l) => l.startsWith("**") || l.startsWith("- **") || l.startsWith("- "));
+  const items = lines.map((line) => {
+    // Match label, optional duration (e.g. "67h 17m"), and percentage
+    const m = line.match(/\*\*(.+?)\*\*.*?(?:(\d+h\s*\d*m?|\d+m).*?)?(\d+)%/);
+    if (!m) return null;
+    return { label: m[1], duration: m[2]?.trim() ?? null, pct: parseInt(m[3]) };
+  }).filter(Boolean) as { label: string; duration: string | null; pct: number }[];
+
+  if (!items.length) return <ReactMarkdown>{body}</ReactMarkdown>;
+
+  const total = items.reduce((s, it) => s + it.pct, 0);
 
   return (
-    <div className="space-y-2.5">
-      {items.map((item, i) => (
-        <div key={i}>
-          <div className="flex justify-between text-xs mb-1">
-            <span className="text-gray-700">{item.label}</span>
-            <span className="text-gray-400">{item.pct}%</span>
-          </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+    <div className="space-y-1">
+      {/* Stacked bar summary */}
+      <div className="flex h-2 rounded-full overflow-hidden mb-4 gap-px">
+        {items.map((item, i) => {
+          const color = CATEGORY_PALETTE[i % CATEGORY_PALETTE.length];
+          return (
             <div
-              className="h-full bg-gray-800 rounded-full"
-              style={{ width: `${item.pct}%` }}
+              key={i}
+              className={`${color.bar} transition-all`}
+              style={{ width: `${(item.pct / Math.max(total, 100)) * 100}%` }}
             />
-          </div>
-        </div>
-      ))}
+          );
+        })}
+        {total < 100 && (
+          <div className="bg-gray-100 flex-1" />
+        )}
+      </div>
+
+      {/* Per-category rows */}
+      <div className="space-y-2.5">
+        {items.map((item, i) => {
+          const color = CATEGORY_PALETTE[i % CATEGORY_PALETTE.length];
+          return (
+            <div key={i}>
+              <div className="flex justify-between text-xs mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full ${color.bar} shrink-0`} />
+                  <span className="text-gray-700">{item.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.duration && (
+                    <span className="text-gray-400 font-mono">{item.duration}</span>
+                  )}
+                  <span className={`font-medium ${color.text}`}>{item.pct}%</span>
+                </div>
+              </div>
+              <div className={`h-1.5 ${color.track} rounded-full overflow-hidden`}>
+                <div
+                  className={`h-full ${color.bar} rounded-full`}
+                  style={{ width: `${item.pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

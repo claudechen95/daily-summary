@@ -1,5 +1,5 @@
 import { getAllSummaries } from "@/lib/redis";
-import DaySummaryView from "@/components/DaySummary";
+import EntryCard from "@/components/EntryCard";
 
 export const dynamic = "force-dynamic";
 
@@ -40,14 +40,13 @@ export default async function Home() {
               </h2>
               <div className="space-y-12">
                 {day.entries.map((entry, i) => (
-                  <div key={i}>
-                    {day.entries.length > 1 && (
-                      <p className="text-xs text-gray-300 mb-4">
-                        {formatTime(entry.createdAt)}
-                      </p>
-                    )}
-                    <DaySummaryView text={entry.text} />
-                  </div>
+                  <EntryCard
+                    key={i}
+                    text={entry.text}
+                    date={day.date}
+                    index={i}
+                    timestamp={day.entries.length > 1 ? formatTime(entry.createdAt) : undefined}
+                  />
                 ))}
               </div>
             </article>

@@ -70,3 +70,22 @@ export async function getAllSummaries(): Promise<DaySummary[]> {
     .filter((r): r is StoredValue => r !== null)
     .map(normalize);
 }
+
+export async function deleteEntry(date: string, index: number): Promise<void> {
+  const redis = getRedis();
+  const key = `summary:${date}`;
+  const raw = await redis.get<StoredValue>(key);
+  if (!raw) return;
+
+  const existing = normalize(raw);
+  const entries = existing.entries.filter((_, i) => i !== index);
+
+  if (entries.length === 0) {
+    await redis.del(key);
+    await redis.zrem(INDEX_KEY, date);
+    return;
+  }
+
+  const now = new Date().toISOString();
+  await redis.set(key, { date, entries, updatedAt: now });
+}
