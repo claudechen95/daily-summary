@@ -26,7 +26,10 @@ export default async function Home() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-1">Web Activity</h1>
+      <div className="flex items-center gap-3 mb-1">
+        <img src="/favicon.svg" alt="" className="w-8 h-8 rounded-lg" />
+        <h1 className="text-3xl font-bold">Web Activity</h1>
+      </div>
       <p className="text-gray-400 mb-12 text-sm">Daily browser history</p>
 
       {summaries.length === 0 ? (
