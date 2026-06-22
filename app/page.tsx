@@ -49,6 +49,7 @@ export default async function Home() {
                     date={day.date}
                     index={i}
                     timestamp={day.entries.length > 1 ? formatTime(entry.createdAt) : undefined}
+                    insight={entry.insight}
                   />
                 ))}
               </div>

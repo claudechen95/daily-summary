@@ -25,3 +25,9 @@ yarn-error.log*
 # local tooling artifacts
 .playwright-mcp/
 tsconfig.tsbuildinfo
+
+# extension data (captured pages, generated summaries, logs)
+extension/captured_pages/
+extension/summaries/
+extension/*.log
+extension/*.err

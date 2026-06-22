@@ -15,6 +15,7 @@ function getRedis(): Redis {
 export interface DayEntry {
   text: string;
   createdAt: string;
+  insight?: string;
 }
 
 export interface DaySummary {
@@ -39,7 +40,7 @@ function normalize(raw: StoredValue): DaySummary {
 
 const INDEX_KEY = "summary:index";
 
-export async function saveSummary(date: string, text: string): Promise<DaySummary> {
+export async function saveSummary(date: string, text: string, insight?: string): Promise<DaySummary> {
   const redis = getRedis();
   const key = `summary:${date}`;
 
@@ -47,9 +48,10 @@ export async function saveSummary(date: string, text: string): Promise<DaySummar
   const existing = raw ? normalize(raw) : null;
   const now = new Date().toISOString();
 
+  const entry: DayEntry = { text, createdAt: now, ...(insight ? { insight } : {}) };
   const updated: DaySummary = {
     date,
-    entries: [...(existing?.entries ?? []), { text, createdAt: now }],
+    entries: [...(existing?.entries ?? []), entry],
     updatedAt: now,
   };
 

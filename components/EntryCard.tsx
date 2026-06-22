@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { deleteEntryAction, generateSuggestionAction } from "@/app/actions";
+import { deleteEntryAction } from "@/app/actions";
 import DaySummaryView from "./DaySummary";
 
 interface Props {
@@ -9,27 +9,16 @@ interface Props {
   date: string;
   index: number;
   timestamp?: string;
+  insight?: string;
 }
 
-export default function EntryCard({ text, date, index, timestamp }: Props) {
+export default function EntryCard({ text, date, index, timestamp, insight }: Props) {
   const [deleting, setDeleting] = useState(false);
-  const [suggestion, setSuggestion] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
 
   async function handleDelete() {
     if (!confirm("Delete this entry?")) return;
     setDeleting(true);
     await deleteEntryAction(date, index);
-  }
-
-  async function handleSuggest() {
-    setGenerating(true);
-    try {
-      const result = await generateSuggestionAction(text);
-      setSuggestion(result);
-    } finally {
-      setGenerating(false);
-    }
   }
 
   return (
@@ -46,22 +35,12 @@ export default function EntryCard({ text, date, index, timestamp }: Props) {
         ×
       </button>
       <DaySummaryView text={text} />
-      <div className="mt-8 pt-6 border-t border-gray-100">
-        {suggestion ? (
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">AI Insight</p>
-            <p className="text-sm text-gray-600 leading-relaxed italic border-l-2 border-gray-200 pl-3">{suggestion}</p>
-          </div>
-        ) : (
-          <button
-            onClick={handleSuggest}
-            disabled={generating}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors disabled:cursor-not-allowed"
-          >
-            {generating ? "Thinking…" : "✦ Get AI insight"}
-          </button>
-        )}
-      </div>
+      {insight && (
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">AI Insight</p>
+          <p className="text-sm text-gray-600 leading-relaxed italic border-l-2 border-gray-200 pl-3">{insight}</p>
+        </div>
+      )}
     </div>
   );
 }
