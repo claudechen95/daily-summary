@@ -73,6 +73,16 @@ export async function getAllSummaries(): Promise<DaySummary[]> {
     .map(normalize);
 }
 
+export async function updateEntryInsight(date: string, index: number, insight: string): Promise<void> {
+  const redis = getRedis();
+  const key = `summary:${date}`;
+  const raw = await redis.get<StoredValue>(key);
+  if (!raw) return;
+  const existing = normalize(raw);
+  existing.entries[index] = { ...existing.entries[index], insight };
+  await redis.set(key, existing);
+}
+
 export async function deleteEntry(date: string, index: number): Promise<void> {
   const redis = getRedis();
   const key = `summary:${date}`;

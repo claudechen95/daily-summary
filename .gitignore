@@ -26,8 +26,9 @@ yarn-error.log*
 .playwright-mcp/
 tsconfig.tsbuildinfo
 
-# extension data (captured pages, generated summaries, logs)
+# extension data and local config (captured pages, generated summaries, logs, launchd plists)
 extension/captured_pages/
 extension/summaries/
 extension/*.log
 extension/*.err
+extension/*.plist
