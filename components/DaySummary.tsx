@@ -124,6 +124,23 @@ function Timeline({ body }: { body: string }) {
   );
 }
 
+function parseDurationToMinutes(duration: string): number {
+  let total = 0;
+  const hours = duration.match(/(\d+)h/);
+  const mins = duration.match(/(\d+)m/);
+  if (hours) total += parseInt(hours[1]) * 60;
+  if (mins) total += parseInt(mins[1]);
+  return total;
+}
+
+function formatMinutes(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
 const CATEGORY_PALETTE = [
   { bar: "bg-blue-500", track: "bg-blue-50", text: "text-blue-600" },
   { bar: "bg-violet-500", track: "bg-violet-50", text: "text-violet-600" },
@@ -145,9 +162,18 @@ function Categories({ body }: { body: string }) {
   if (!items.length) return <ReactMarkdown>{body}</ReactMarkdown>;
 
   const total = items.reduce((s, it) => s + it.pct, 0);
+  const itemsWithDuration = items.filter((it) => it.duration !== null);
+  const totalMinutes = itemsWithDuration.length > 0
+    ? itemsWithDuration.reduce((sum, it) => sum + parseDurationToMinutes(it.duration!), 0)
+    : null;
 
   return (
     <div className="space-y-1">
+      {totalMinutes !== null && (
+        <p className="text-xs text-gray-400 mb-3">
+          Total: <span className="text-gray-700 font-medium">{formatMinutes(totalMinutes)}</span>
+        </p>
+      )}
       {/* Stacked bar summary */}
       <div className="flex h-2 rounded-full overflow-hidden mb-4 gap-px">
         {items.map((item, i) => {
