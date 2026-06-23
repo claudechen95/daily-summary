@@ -230,6 +230,8 @@ export default function DaySummaryView({ text }: { text: string }) {
   const topSites = sections.find((s) => s.title.includes("Top Sites"));
   const timeline = sections.find((s) => s.title.includes("Timeline"));
   const categories = sections.find((s) => s.title.includes("Category"));
+  const suggestions = sections.find((s) => s.title.includes("Suggestions"));
+  const blindSpots = sections.find((s) => s.title.includes("Blind Spots") || s.title.includes("Blind"));
 
   return (
     <div className="space-y-8">
@@ -264,6 +266,47 @@ export default function DaySummaryView({ text }: { text: string }) {
             Timeline
           </h3>
           <Timeline body={timeline.body} />
+        </div>
+      )}
+
+      {(suggestions || blindSpots) && (
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+          {suggestions && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
+                Suggestions
+              </h3>
+              <ReactMarkdown
+                components={{
+                  ol: ({ children }) => <ol className="space-y-3 list-none p-0">{children}</ol>,
+                  li: ({ children }) => (
+                    <li className="text-sm text-gray-700 leading-relaxed pl-4 border-l-2 border-gray-100">{children}</li>
+                  ),
+                  strong: ({ children }) => <strong className="text-gray-900">{children}</strong>,
+                }}
+              >
+                {suggestions.body}
+              </ReactMarkdown>
+            </div>
+          )}
+          {blindSpots && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
+                Blind Spots
+              </h3>
+              <ReactMarkdown
+                components={{
+                  ol: ({ children }) => <ol className="space-y-3 list-none p-0">{children}</ol>,
+                  li: ({ children }) => (
+                    <li className="text-sm text-gray-700 leading-relaxed pl-4 border-l-2 border-amber-100">{children}</li>
+                  ),
+                  strong: ({ children }) => <strong className="text-gray-900">{children}</strong>,
+                }}
+              >
+                {blindSpots.body}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
       )}
     </div>
