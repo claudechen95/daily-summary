@@ -32,7 +32,7 @@ export default function EntryCard({ text, date, index, timestamp, insight }: Pro
       <button
         onClick={handleDelete}
         title="Delete entry"
-        className="absolute top-0 right-0 opacity-30 hover:opacity-100 transition-opacity text-gray-400 hover:text-red-400 text-lg leading-none p-1 -mt-1 -mr-1"
+        className="absolute top-0 right-0 text-gray-300 hover:text-red-400 transition-colors text-lg leading-none p-1 -mt-1 -mr-1"
         aria-label="Delete entry"
       >
         ×
