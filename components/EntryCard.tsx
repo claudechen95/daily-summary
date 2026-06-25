@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { deleteEntryAction } from "@/app/actions";
 import DaySummaryView from "./DaySummary";
 
@@ -14,11 +15,13 @@ interface Props {
 
 export default function EntryCard({ text, date, index, timestamp, insight }: Props) {
   const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   async function handleDelete() {
     if (!confirm("Delete this entry?")) return;
     setDeleting(true);
     await deleteEntryAction(date, index);
+    router.refresh();
   }
 
   return (
