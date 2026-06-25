@@ -25,7 +25,7 @@ export default function EntryCard({ text, date, index, timestamp, insight }: Pro
   }
 
   return (
-    <div className={`relative ${deleting ? "opacity-40 pointer-events-none" : ""}`}>
+    <div className={`relative pr-6 ${deleting ? "opacity-40 pointer-events-none" : ""}`}>
       {timestamp && (
         <p className="text-xs text-gray-300 mb-4">{timestamp}</p>
       )}
