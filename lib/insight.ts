@@ -1,4 +1,7 @@
-export async function generateInsight(text: string): Promise<string | undefined> {
+export const DEFAULT_INSIGHT_PROMPT =
+  "Based on this day's web browsing activity summary, provide a holistic 2-3 sentence suggestion about habits, balance, or how to improve tomorrow. Be specific and actionable.";
+
+export async function generateInsight(text: string, prompt = DEFAULT_INSIGHT_PROMPT): Promise<string | undefined> {
   try {
     const res = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
       method: "POST",
@@ -11,7 +14,7 @@ export async function generateInsight(text: string): Promise<string | undefined>
         max_tokens: 2000,
         messages: [{
           role: "user",
-          content: `Based on this day's web browsing activity summary, provide a holistic 2-3 sentence suggestion about habits, balance, or how to improve tomorrow. Be specific and actionable.\n\n${text}`,
+          content: `${prompt}\n\n${text}`,
         }],
       }),
     });
